@@ -26,6 +26,11 @@ export async function GET() {
             upvotes: true,
           },
         },
+        upvotes: {
+          where: {
+            userId: user.id,
+          },
+        },
       },
     });
 
@@ -34,6 +39,7 @@ export async function GET() {
         streams: streams.map(({ _count, ...rest }) => ({
           ...rest,
           upvotes: _count.upvotes,
+          haveUpvoted: rest.upvotes.length > 0 ? true : false,
         })),
       },
       { status: 200 }
