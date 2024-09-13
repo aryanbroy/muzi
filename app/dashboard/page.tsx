@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Music,
   ThumbsUp,
   ThumbsDown,
   Play,
@@ -22,9 +22,10 @@ import {
   Twitter,
   Link,
 } from "lucide-react";
-import NextLink from "next/link";
+// import NextLink from "next/link";
 
 // Placeholder function for fetching video details
+
 const fetchVideoDetails = async (url: string) => {
   // In a real application, this would make an API call to get video details
   return {
@@ -51,13 +52,25 @@ const share = (platform: string) => {
   console.log(`Sharing via ${platform}`);
 };
 
-export default function SongVotingPage() {
+
+const REFRESH_INTERVAL_MS = 10 * 1000;
+const refreshStreams = async () => {
+  const res = await axios.get("/api/streams/my");
+  console.log(res);
+};
+
+export default function Dashboard() {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoDetails, setVideoDetails] = useState<{
     title: string;
     thumbnail: string;
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    refreshStreams();
+    const interval = setInterval(() => {}, REFRESH_INTERVAL_MS);
+  }, []);
 
   const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
