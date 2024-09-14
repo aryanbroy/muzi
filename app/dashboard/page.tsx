@@ -5,23 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-// import { Separator } from "@/components/ui/separator"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ThumbsUp,
-  ThumbsDown,
-  Play,
-  Pause,
-  Share2,
-  Facebook,
-  Twitter,
-  Link,
-} from "lucide-react";
+import { ThumbsUp, ThumbsDown, Play, Pause, Share2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 // import NextLink from "next/link";
 
@@ -49,16 +33,16 @@ const vote = async (id: number, type: "up" | "down") => {
 };
 
 // Placeholder function for sharing
-const share = (platform: string) => {
-  // In a real application, this would open a share dialog or copy a link
-  console.log(`Sharing via ${platform}`);
-};
+// const share = (platform: string) => {
+//   // In a real application, this would open a share dialog or copy a link
+//   console.log(`Sharing via ${platform}`);
+// };
 
-const REFRESH_INTERVAL_MS = 10 * 1000;
-const refreshStreams = async () => {
-  const res = await axios.get("/api/streams/my");
-  console.log(res);
-};
+// const REFRESH_INTERVAL_MS = 10 * 1000;
+// const refreshStreams = async () => {
+//   const res = await axios.get("/api/streams/my");
+//   console.log(res);
+// };
 
 export default function Dashboard() {
   const [videoUrl, setVideoUrl] = useState("");
@@ -71,13 +55,19 @@ export default function Dashboard() {
   const { data: session } = useSession();
   console.log(session);
 
-  const fetchStreams = async () => {
-    const res = await axios.get(
-      `/api/streams?creatorId=1f37f888-757a-4469-ada5-8086b37dff26`
-    );
-    const data = res.data;
-    console.log(data);
+  const onShare = () => {
+    if (!session || !session.user) return;
+    const url = `${window.location.origin}/creator/${session?.user.id}`;
+    console.log(url);
   };
+
+  // const fetchStreams = async () => {
+  //   const res = await axios.get(
+  //     `/api/streams?creatorId=1f37f888-757a-4469-ada5-8086b37dff26`
+  //   );
+  //   const data = res.data;
+  //   console.log(data);
+  // };
 
   // useEffect(() => {
   //   refreshStreams();
@@ -114,40 +104,14 @@ export default function Dashboard() {
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Song Voting</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-gray-800 border-gray-700">
-              <DropdownMenuItem
-                onClick={() => share("facebook")}
-                className="hover:bg-gray-700"
-              >
-                <Facebook className="mr-2 h-4 w-4" />
-                <span>Facebook</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => share("twitter")}
-                className="hover:bg-gray-700"
-              >
-                <Twitter className="mr-2 h-4 w-4" />
-                <span>Twitter</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => share("copyLink")}
-                className="hover:bg-gray-700"
-              >
-                <Link className="mr-2 h-4 w-4" />
-                <span>Copy Link</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={onShare}
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </Button>
         </div>
         <section className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
