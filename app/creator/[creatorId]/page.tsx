@@ -22,17 +22,14 @@ import {
   Twitter,
   Link,
 } from "lucide-react";
-// import NextLink from "next/link";
 
-// Placeholder function for fetching video details
-
-const fetchVideoDetails = async (url: string) => {
-  // In a real application, this would make an API call to get video details
-  return {
-    title: "Sample Video Title",
-    thumbnail: "/placeholder.svg?height=90&width=120",
-  };
-};
+// const fetchVideoDetails = async (url: string) => {
+//   // In a real application, this would make an API call to get video details
+//   return {
+//     title: "Sample Video Title",
+//     thumbnail: "/placeholder.svg?height=90&width=120",
+//   };
+// };
 
 // Placeholder function for submitting a song
 const submitSong = async (url: string) => {
@@ -59,7 +56,11 @@ const refreshStreams = async () => {
   console.log(res);
 };
 
-export default function Dashboard() {
+export default function Dashboard({
+  params: { creatorId },
+}: {
+  params: { creatorId: string };
+}) {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoDetails, setVideoDetails] = useState<{
     title: string;
@@ -68,33 +69,48 @@ export default function Dashboard() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const fetchStreams = async () => {
-    const res = await axios.get(
-      `/api/streams?creatorId=1f37f888-757a-4469-ada5-8086b37dff26`
-    );
-    const data = res.data;
-    console.log(data);
+    try {
+      const res = await axios.get(`/api/streams?creatorId=${creatorId ?? ""}`);
+      const data = res.data;
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
-    refreshStreams();
-    const interval = setInterval(() => {
-      refreshStreams();
-    }, REFRESH_INTERVAL_MS);
-    // fetchStreams();
+    fetchStreams();
+    // const fetchStreams = async () => {
+    //     try {
+    //       const res = await axios.get(`/api/streams?creatorId=${creatorId ?? ""}`);
+    //       const data = res.data;
+    //       console.log(data);
+    //     } catch (error) {
+    //      console.log(error)
+    //     }
+    //   };
+  }, [creatorId]);
 
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   refreshStreams();
+  //   const interval = setInterval(() => {
+  //     refreshStreams();
+  //   }, REFRESH_INTERVAL_MS);
+  //   // fetchStreams();
 
-  const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setVideoUrl(url);
-    if (url) {
-      const details = await fetchVideoDetails(url);
-      setVideoDetails(details);
-    } else {
-      setVideoDetails(null);
-    }
-  };
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  // const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const url = e.target.value;
+  //   setVideoUrl(url);
+  //   if (url) {
+  //     const details = await fetchVideoDetails(url);
+  //     setVideoDetails(details);
+  //   } else {
+  //     setVideoDetails(null);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,7 +194,6 @@ export default function Dashboard() {
                   id="video-url"
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={videoUrl}
-                  onChange={handleUrlChange}
                   className="bg-gray-800 border-gray-700"
                 />
               </div>

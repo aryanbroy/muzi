@@ -1,172 +1,254 @@
 "use client";
 
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+// import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { Badge } from "@/components/ui/badge";
-import { Search, Users, MoreVertical, ThumbsUp } from "lucide-react";
+import {
+  ThumbsUp,
+  ThumbsDown,
+  Play,
+  Pause,
+  Share2,
+  Facebook,
+  Twitter,
+  Link,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+// import NextLink from "next/link";
 
-// Placeholder data for creators
-const creators = [
-  {
-    id: 1,
-    name: "DJ Awesome",
-    genre: "Electronic",
-    followers: 10000,
-    rating: 4.8,
-    image: "/placeholder.svg?height=100&width=100&text=DJ",
-  },
-  {
-    id: 2,
-    name: "Rock Star",
-    genre: "Rock",
-    followers: 8500,
-    rating: 4.6,
-    image: "/placeholder.svg?height=100&width=100&text=RS",
-  },
-  {
-    id: 3,
-    name: "Pop Princess",
-    genre: "Pop",
-    followers: 15000,
-    rating: 4.9,
-    image: "/placeholder.svg?height=100&width=100&text=PP",
-  },
-  {
-    id: 4,
-    name: "Hip Hop Master",
-    genre: "Hip Hop",
-    followers: 12000,
-    rating: 4.7,
-    image: "/placeholder.svg?height=100&width=100&text=HH",
-  },
-  {
-    id: 5,
-    name: "Jazz Cat",
-    genre: "Jazz",
-    followers: 6000,
-    rating: 4.5,
-    image: "/placeholder.svg?height=100&width=100&text=JC",
-  },
-];
+// Placeholder function for fetching video details
 
-// Placeholder function for following a creator
-const followCreator = (creatorId: number) => {
-  console.log(`Following creator with id: ${creatorId}`);
+const fetchVideoDetails = async (url: string) => {
+  // In a real application, this would make an API call to get video details
+  return {
+    title: "Sample Video Title",
+    thumbnail: "/placeholder.svg?height=90&width=120",
+  };
 };
 
-export default function CreatorsDashboard() {
-  const [searchTerm, setSearchTerm] = useState("");
+// Placeholder function for submitting a song
+const submitSong = async (url: string) => {
+  // In a real application, this would make an API call to submit the song
+  console.log("Submitting song:", url);
+};
 
-  const filteredCreators = creators.filter(
-    (creator) =>
-      creator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      creator.genre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const vote = async (id: number, type: "up" | "down") => {
+  //  const res = await axios.post("/api/streams/upvote", {streamId : id} )
+  //  const data = res.data;
+  //  console.log(data)
+  console.log(`Voting ${type} for song ${id}`);
+};
+
+// Placeholder function for sharing
+const share = (platform: string) => {
+  // In a real application, this would open a share dialog or copy a link
+  console.log(`Sharing via ${platform}`);
+};
+
+const REFRESH_INTERVAL_MS = 10 * 1000;
+const refreshStreams = async () => {
+  const res = await axios.get("/api/streams/my");
+  console.log(res);
+};
+
+export default function Dashboard() {
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoDetails, setVideoDetails] = useState<{
+    title: string;
+    thumbnail: string;
+  } | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const { data: session } = useSession();
+  console.log(session);
+
+  const fetchStreams = async () => {
+    const res = await axios.get(
+      `/api/streams?creatorId=1f37f888-757a-4469-ada5-8086b37dff26`
+    );
+    const data = res.data;
+    console.log(data);
+  };
+
+  // useEffect(() => {
+  //   refreshStreams();
+  //   const interval = setInterval(() => {
+  //     refreshStreams();
+  //   }, REFRESH_INTERVAL_MS);
+  //   // fetchStreams();
+
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setVideoUrl(url);
+    if (url) {
+      const details = await fetchVideoDetails(url);
+      setVideoDetails(details);
+    } else {
+      setVideoDetails(null);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (videoUrl) {
+      await submitSong(videoUrl);
+      setVideoUrl("");
+      setVideoDetails(null);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100">
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Discover Creators</h1>
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              className="pl-8 bg-gray-800 border-gray-700"
-              placeholder="Search creators..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-        <ScrollArea className="h-[calc(100vh-12rem)]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCreators.map((creator) => (
-              <Card
-                key={creator.id}
-                className="bg-gray-900 border-gray-700 shadow-lg shadow-purple-900/20"
+          <h1 className="text-3xl font-bold">Song Voting</h1>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-purple-600 hover:bg-purple-700"
               >
-                <CardHeader className="flex flex-row items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={creator.image} alt={creator.name} />
-                    <AvatarFallback>
-                      {creator.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <CardTitle className="text-gray-200">
-                      {creator.name}
-                    </CardTitle>
-                    <CardDescription>{creator.genre}</CardDescription>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-gray-800 border-gray-700">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="hover:bg-gray-700">
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-gray-700">
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-gray-700">
-                        Report
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1 text-gray-400" />
-                      <span className="text-gray-400">
-                        {creator.followers.toLocaleString()} followers
-                      </span>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-gray-800 border-gray-700">
+              <DropdownMenuItem
+                onClick={() => share("facebook")}
+                className="hover:bg-gray-700"
+              >
+                <Facebook className="mr-2 h-4 w-4" />
+                <span>Facebook</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => share("twitter")}
+                className="hover:bg-gray-700"
+              >
+                <Twitter className="mr-2 h-4 w-4" />
+                <span>Twitter</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => share("copyLink")}
+                className="hover:bg-gray-700"
+              >
+                <Link className="mr-2 h-4 w-4" />
+                <span>Copy Link</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Now Playing</h2>
+            <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
+              {/* This would be replaced with an actual YouTube embed */}
+              <p className="text-gray-400">YouTube Player Placeholder</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Current Song Title</h3>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Submit a Song</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="video-url" className="text-sm font-medium">
+                  YouTube Video URL
+                </label>
+                <Input
+                  id="video-url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={videoUrl}
+                  onChange={handleUrlChange}
+                  className="bg-gray-800 border-gray-700"
+                />
+              </div>
+              {videoDetails && (
+                <div className="flex items-center space-x-4 bg-gray-800 p-2 rounded-lg">
+                  <img
+                    src={videoDetails.thumbnail}
+                    alt="Video thumbnail"
+                    className="w-20 h-15 object-cover rounded"
+                  />
+                  <p className="flex-1 text-sm">{videoDetails.title}</p>
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                Submit Song
+              </Button>
+            </form>
+          </div>
+        </section>
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">Upcoming Songs</h2>
+          <ScrollArea className="h-[400px] rounded-md border border-gray-700">
+            <div className="p-4 space-y-4">
+              {[1, 2, 3, 4, 5].map((song) => (
+                <div
+                  key={song}
+                  className="flex items-center justify-between bg-gray-800 p-4 rounded-lg"
+                >
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={`/placeholder.svg?height=60&width=80&text=Song${song}`}
+                      alt={`Song ${song} thumbnail`}
+                      className="w-20 h-15 object-cover rounded"
+                    />
+                    <div>
+                      <h3 className="font-semibold">Song Title {song}</h3>
+                      <p className="text-sm text-gray-400">Artist Name</p>
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={() => followCreator(creator.id)}
-                  >
-                    Follow
-                  </Button>
-                  <Button variant="outline">
-                    <ThumbsUp className="h-4 w-4 mr-2" />
-                    Support
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => vote(song, "up")}
+                      className="hover:text-green-500"
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium">{50 - song * 5}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => vote(song, "down")}
+                      className="hover:text-red-500"
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </section>
       </main>
       <footer className="py-6 px-4 md:px-6 border-t border-gray-800">
         <p className="text-center text-sm text-gray-400">
