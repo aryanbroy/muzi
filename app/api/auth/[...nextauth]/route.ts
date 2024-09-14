@@ -16,17 +16,50 @@ const handler = NextAuth({
         return false;
       }
       try {
-        await prismaClient.user.create({
+        const existingUser = await prismaClient.user.findFirst({
+          where: {
+            email: params.user.email,
+          },
+        });
+
+        if (existingUser) {
+          params.user.id = existingUser.id;
+          return true;
+        }
+        const newUser = await prismaClient.user.create({
           data: {
             email: params.user.email,
             provider: "Google",
           },
         });
+        params.user.id = newUser.id;
+        return true;
       } catch (error) {
-        // console.log(error);
-        // return false;
+        console.log(error);
+        console.log("some error occured");
+        return false;
       }
-      return true;
+    },
+    async jwt({ token, user }) {
+      if (!user) {
+        return token;
+      }
+
+      return {
+        ...token,
+        id: user.id,
+      };
+    },
+
+    async session({ session, token }) {
+      console.log(session, token)
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id,
+        },
+      };
     },
   },
 });
