@@ -2,11 +2,25 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThumbsUp, ThumbsDown, Play, Pause, Share2 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { Copy } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 // import NextLink from "next/link";
 
 // Placeholder function for fetching video details
@@ -51,15 +65,17 @@ export default function Dashboard() {
     thumbnail: string;
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [creatorUrl, setCreatorUrl] = useState("");
+  const { toast } = useToast();
 
   const { data: session } = useSession();
-  console.log(session);
+  // console.log(session);
 
-  const onShare = () => {
+  useEffect(() => {
     if (!session || !session.user) return;
     const url = `${window.location.origin}/creator/${session?.user.id}`;
-    console.log(url);
-  };
+    setCreatorUrl(url);
+  }, [session, session?.user]);
 
   // const fetchStreams = async () => {
   //   const res = await axios.get(
@@ -99,19 +115,61 @@ export default function Dashboard() {
     }
   };
 
+  const copyLink = () => {
+    navigator.clipboard.writeText(creatorUrl);
+    toast({
+      title: "Text copied to clipboard!",
+    });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100">
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Song Voting</h1>
-          <Button
-            variant="outline"
-            className="bg-purple-600 hover:bg-purple-700"
-            onClick={onShare}
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className="bg-purple-600 hover:bg-purple-700"
+                // onClick={onShare}
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Share link</DialogTitle>
+                <DialogDescription>
+                  Share the voting link with your friends and fans
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center space-x-2">
+                <div className="grid flex-1 gap-2">
+                  <Label htmlFor="link" className="sr-only">
+                    Link
+                  </Label>
+                  <Input id="link" defaultValue={creatorUrl ?? ""} readOnly />
+                </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="px-3"
+                  onClick={copyLink}
+                >
+                  <span className="sr-only">Copy</span>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <DialogFooter className="sm:justify-start">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Close
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         <section className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
