@@ -74,9 +74,24 @@ export async function GET(req: NextRequest) {
       where: {
         userId: creatorId ?? "",
       },
+      include: {
+        _count: {
+          select: {
+            upvotes: true,
+          },
+        },
+      },
     });
 
-    return NextResponse.json({ streams });
+    return NextResponse.json(
+      {
+        streams: streams.map(({ _count, ...rest }) => ({
+          ...rest,
+          upvoteCount: _count.upvotes,
+        })),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { message: "Error while fetching streams" },

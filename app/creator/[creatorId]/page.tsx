@@ -22,6 +22,20 @@ import {
   Twitter,
   Link,
 } from "lucide-react";
+import Image from "next/image";
+
+type Stream = {
+  id: string;
+  type: ["Youtube", "Spotify"];
+  url: string;
+  extractedId: string;
+  title: string;
+  smallImg: string;
+  bigImg: string;
+  active: boolean;
+  userId: string;
+  upvoteCount: number;
+};
 
 // const fetchVideoDetails = async (url: string) => {
 //   // In a real application, this would make an API call to get video details
@@ -37,12 +51,12 @@ const submitSong = async (url: string) => {
   console.log("Submitting song:", url);
 };
 
-const vote = async (id: number, type: "up" | "down") => {
-  //  const res = await axios.post("/api/streams/upvote", {streamId : id} )
-  //  const data = res.data;
-  //  console.log(data)
-  console.log(`Voting ${type} for song ${id}`);
-};
+// const vote = async (id: string, type: "up" | "down") => {
+//   //  const res = await axios.post("/api/streams/upvote", {streamId : id} )
+//   //  const data = res.data;
+//   //  console.log(data)
+//   console.log(`Voting ${type} for song ${id}`);
+// };
 
 // Placeholder function for sharing
 const share = (platform: string) => {
@@ -53,7 +67,7 @@ const share = (platform: string) => {
 const REFRESH_INTERVAL_MS = 10 * 1000;
 const refreshStreams = async () => {
   const res = await axios.get("/api/streams/my");
-  console.log(res);
+  // console.log(res);
 };
 
 export default function Dashboard({
@@ -67,29 +81,34 @@ export default function Dashboard({
     thumbnail: string;
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-
-  const fetchStreams = async () => {
-    try {
-      const res = await axios.get(`/api/streams?creatorId=${creatorId ?? ""}`);
-      const data = res.data;
-      console.log(data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const [streams, setStreams] = useState<Stream[]>([]);
+  // console.log(streams);
 
   useEffect(() => {
+    const fetchStreams = async () => {
+      try {
+        const res = await axios.get(
+          `/api/streams?creatorId=${creatorId ?? ""}`
+        );
+        const data = res.data;
+        setStreams(data.streams);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchStreams();
-    // const fetchStreams = async () => {
-    //     try {
-    //       const res = await axios.get(`/api/streams?creatorId=${creatorId ?? ""}`);
-    //       const data = res.data;
-    //       console.log(data);
-    //     } catch (error) {
-    //      console.log(error)
-    //     }
-    //   };
   }, [creatorId]);
+
+  useEffect(() => {
+    refreshStreams();
+  }, []);
+
+  const handleVote = async (streamId: string) => {
+    console.log(streamId);
+    const res = await axios.post("/api/streams/upvote", { streamId });
+    const data = res.data;
+    console.log(data);
+  };
 
   // useEffect(() => {
   //   refreshStreams();
@@ -194,15 +213,18 @@ export default function Dashboard({
                   id="video-url"
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={videoUrl}
+                  readOnly
                   className="bg-gray-800 border-gray-700"
                 />
               </div>
               {videoDetails && (
                 <div className="flex items-center space-x-4 bg-gray-800 p-2 rounded-lg">
-                  <img
+                  <Image
                     src={videoDetails.thumbnail}
                     alt="Video thumbnail"
                     className="w-20 h-15 object-cover rounded"
+                    width={40}
+                    height={40}
                   />
                   <p className="flex-1 text-sm">{videoDetails.title}</p>
                 </div>
@@ -220,40 +242,43 @@ export default function Dashboard({
           <h2 className="text-2xl font-bold">Upcoming Songs</h2>
           <ScrollArea className="h-[400px] rounded-md border border-gray-700">
             <div className="p-4 space-y-4">
-              {[1, 2, 3, 4, 5].map((song) => (
+              {streams.map((song) => (
                 <div
-                  key={song}
+                  key={song.id}
                   className="flex items-center justify-between bg-gray-800 p-4 rounded-lg"
                 >
                   <div className="flex items-center space-x-4">
-                    <img
-                      src={`/placeholder.svg?height=60&width=80&text=Song${song}`}
-                      alt={`Song ${song} thumbnail`}
+                    <Image
+                      src={song.smallImg}
+                      alt={`Song ${song.title}`}
                       className="w-20 h-15 object-cover rounded"
+                      width={40}
+                      height={40}
                     />
                     <div>
-                      <h3 className="font-semibold">Song Title {song}</h3>
-                      <p className="text-sm text-gray-400">Artist Name</p>
+                      <h3 className="font-semibold">Song Title {song.title}</h3>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => vote(song, "up")}
+                      onClick={() => handleVote(song.id)}
                       className="hover:text-green-500"
                     >
                       <ThumbsUp className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm font-medium">{50 - song * 5}</span>
-                    <Button
+                    <span className="text-sm font-medium">
+                      {song.upvoteCount}
+                    </span>
+                    {/* <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => vote(song, "down")}
+                      onClick={() => vote(song., "down")}
                       className="hover:text-red-500"
                     >
                       <ThumbsDown className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))}
