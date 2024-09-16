@@ -6,13 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator"
-import {
-  ThumbsUp,
-  // ThumbsDown,
-  Play,
-  Pause,
-  Share2,
-} from "lucide-react";
+import { ThumbsUp, ThumbsDown, Play, Pause, Share2 } from "lucide-react";
 import Image from "next/image";
 
 type Stream = {
@@ -71,8 +65,7 @@ export default function Dashboard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [upvoteCount, setUpvoteCount] = useState<Record<string, number>>({});
-  // console.log(streams);
-  // console.log("Upvotes count: ", upvoteCount);
+  const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -86,13 +79,11 @@ export default function Dashboard({
         upcomingSongs.map((song) => {
           song.haveUpvoted = myStreamData.some((stream) => {
             if (stream.id === song.id && stream.haveUpvoted === true) {
+              setUpvotedSongsId([...upvotedSongsId, stream.id]);
               return true;
             }
           });
         });
-        // const upvoteCounts = upcomingSongs.map((song) => {
-        //   return { id: song.id, upvotes: song.upvoteCount };
-        // });
         const upvoteCounts = upcomingSongs.reduce((acc, song) => {
           acc[song.id] = song.upvoteCount;
           return acc;
@@ -104,18 +95,41 @@ export default function Dashboard({
       }
     };
     fetchStreams();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creatorId]);
 
   useEffect(() => {
     refreshStreams();
   }, []);
 
-  // work on this
-  const handleVote = async (streamId: string, currentUpvoteCount: number) => {
-    setUpvoteCount((prev) => ({
-      ...prev,
-      [streamId]: currentUpvoteCount + 1,
-    }));
+  const handleVote = async (streamId: string) => {
+    if (!upvotedSongsId.includes(streamId)) {
+      setUpvoteCount((prev) => ({
+        ...prev,
+        [streamId]: prev[streamId] + 1,
+      }));
+      setUpvotedSongsId([...upvotedSongsId, streamId]);
+      try {
+        await axios.post("/api/streams/upvote", { streamId });
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      setUpvoteCount((prev) => ({
+        ...prev,
+        [streamId]: prev[streamId] - 1,
+      }));
+      const filteredUpvotedSongsId = upvotedSongsId.filter(
+        (song) => song !== streamId
+      );
+      setUpvotedSongsId(filteredUpvotedSongsId);
+      try {
+        await axios.post("/api/streams/downvote", { streamId });
+      } catch (error) {
+        console.log(error);
+      }
+    }
   };
 
   // useEffect(() => {
@@ -244,10 +258,14 @@ export default function Dashboard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleVote(song.id, song.upvoteCount)}
+                      onClick={() => handleVote(song.id)}
                       className="hover:text-green-500"
                     >
-                      <ThumbsUp className="h-4 w-4" />
+                      {upvotedSongsId.includes(song.id) ? (
+                        <ThumbsDown className="h-4 w-4" />
+                      ) : (
+                        <ThumbsUp className="h-4 w-4" />
+                      )}
                     </Button>
                     <span className="text-sm font-medium">
                       {upvoteCount[song.id]}
