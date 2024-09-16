@@ -43,10 +43,10 @@ type MyStream = {
   userId: string;
 };
 
-type UpvoteCount = {
-  id: string;
-  upvotes: number;
-};
+// type UpvoteCount = {
+//   id: string;
+//   upvotes: number;
+// };
 
 const submitSong = async (url: string) => {
   console.log("Submitting song:", url);
@@ -70,9 +70,9 @@ export default function Dashboard({
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
-  const [upvoteCount, setUpvoteCount] = useState<UpvoteCount[] | []>([]);
-  console.log(streams);
-  console.log("Upvotes count: ", upvoteCount);
+  const [upvoteCount, setUpvoteCount] = useState<Record<string, number>>({});
+  // console.log(streams);
+  // console.log("Upvotes count: ", upvoteCount);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -90,9 +90,13 @@ export default function Dashboard({
             }
           });
         });
-        const upvoteCounts = upcomingSongs.map((song) => {
-          return { id: song.id, upvotes: song.upvoteCount };
-        });
+        // const upvoteCounts = upcomingSongs.map((song) => {
+        //   return { id: song.id, upvotes: song.upvoteCount };
+        // });
+        const upvoteCounts = upcomingSongs.reduce((acc, song) => {
+          acc[song.id] = song.upvoteCount;
+          return acc;
+        }, {} as Record<string, number>);
         setUpvoteCount(upvoteCounts);
         setStreams(upcomingSongs);
       } catch (error) {
@@ -107,7 +111,12 @@ export default function Dashboard({
   }, []);
 
   // work on this
-  const handleVote = async (streamId: string, currentUpvoteCount) => {};
+  const handleVote = async (streamId: string, currentUpvoteCount: number) => {
+    setUpvoteCount((prev) => ({
+      ...prev,
+      [streamId]: currentUpvoteCount + 1,
+    }));
+  };
 
   // useEffect(() => {
   //   refreshStreams();
@@ -241,7 +250,7 @@ export default function Dashboard({
                       <ThumbsUp className="h-4 w-4" />
                     </Button>
                     <span className="text-sm font-medium">
-                      {song.upvoteCount}
+                      {upvoteCount[song.id]}
                     </span>
                     {/* <Button
                       variant="ghost"
