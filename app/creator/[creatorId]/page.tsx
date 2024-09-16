@@ -7,20 +7,11 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   ThumbsUp,
-  ThumbsDown,
+  // ThumbsDown,
   Play,
   Pause,
   Share2,
-  Facebook,
-  Twitter,
-  Link,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -35,38 +26,35 @@ type Stream = {
   active: boolean;
   userId: string;
   upvoteCount: number;
+  haveUpvoted: boolean;
 };
 
-// const fetchVideoDetails = async (url: string) => {
-//   // In a real application, this would make an API call to get video details
-//   return {
-//     title: "Sample Video Title",
-//     thumbnail: "/placeholder.svg?height=90&width=120",
-//   };
-// };
+type MyStream = {
+  active: boolean;
+  bigImg: string;
+  extractedId: string;
+  haveUpvoted: boolean;
+  id: string;
+  smallImg: string;
+  title: string;
+  type: ["Youtube", "Spotify"];
+  upvotes: number;
+  url: string;
+  userId: string;
+};
 
-// Placeholder function for submitting a song
+type UpvoteCount = {
+  id: string;
+  upvotes: number;
+};
+
 const submitSong = async (url: string) => {
-  // In a real application, this would make an API call to submit the song
   console.log("Submitting song:", url);
 };
 
-// const vote = async (id: string, type: "up" | "down") => {
-//   //  const res = await axios.post("/api/streams/upvote", {streamId : id} )
-//   //  const data = res.data;
-//   //  console.log(data)
-//   console.log(`Voting ${type} for song ${id}`);
-// };
-
-// Placeholder function for sharing
-const share = (platform: string) => {
-  // In a real application, this would open a share dialog or copy a link
-  console.log(`Sharing via ${platform}`);
-};
-
-const REFRESH_INTERVAL_MS = 10 * 1000;
+// const REFRESH_INTERVAL_MS = 10 * 1000;
 const refreshStreams = async () => {
-  const res = await axios.get("/api/streams/my");
+  await axios.get("/api/streams/my");
   // console.log(res);
 };
 
@@ -82,7 +70,9 @@ export default function Dashboard({
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
-  // console.log(streams);
+  const [upvoteCount, setUpvoteCount] = useState<UpvoteCount[] | []>([]);
+  console.log(streams);
+  console.log("Upvotes count: ", upvoteCount);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -90,8 +80,21 @@ export default function Dashboard({
         const res = await axios.get(
           `/api/streams?creatorId=${creatorId ?? ""}`
         );
-        const data = res.data;
-        setStreams(data.streams);
+        const upcomingSongs: Stream[] = res.data.streams;
+        const myStreamRes = await axios.get("/api/streams/my");
+        const myStreamData: MyStream[] = myStreamRes.data.streams;
+        upcomingSongs.map((song) => {
+          song.haveUpvoted = myStreamData.some((stream) => {
+            if (stream.id === song.id && stream.haveUpvoted === true) {
+              return true;
+            }
+          });
+        });
+        const upvoteCounts = upcomingSongs.map((song) => {
+          return { id: song.id, upvotes: song.upvoteCount };
+        });
+        setUpvoteCount(upvoteCounts);
+        setStreams(upcomingSongs);
       } catch (error) {
         console.log(error);
       }
@@ -103,12 +106,8 @@ export default function Dashboard({
     refreshStreams();
   }, []);
 
-  const handleVote = async (streamId: string) => {
-    console.log(streamId);
-    const res = await axios.post("/api/streams/upvote", { streamId });
-    const data = res.data;
-    console.log(data);
-  };
+  // work on this
+  const handleVote = async (streamId: string, currentUpvoteCount) => {};
 
   // useEffect(() => {
   //   refreshStreams();
@@ -145,40 +144,13 @@ export default function Dashboard({
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Song Voting</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-gray-800 border-gray-700">
-              <DropdownMenuItem
-                onClick={() => share("facebook")}
-                className="hover:bg-gray-700"
-              >
-                <Facebook className="mr-2 h-4 w-4" />
-                <span>Facebook</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => share("twitter")}
-                className="hover:bg-gray-700"
-              >
-                <Twitter className="mr-2 h-4 w-4" />
-                <span>Twitter</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => share("copyLink")}
-                className="hover:bg-gray-700"
-              >
-                <Link className="mr-2 h-4 w-4" />
-                <span>Copy Link</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
+          </Button>
         </div>
         <section className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
@@ -256,14 +228,14 @@ export default function Dashboard({
                       height={40}
                     />
                     <div>
-                      <h3 className="font-semibold">Song Title {song.title}</h3>
+                      <h3 className="font-semibold">{song.title}</h3>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleVote(song.id)}
+                      onClick={() => handleVote(song.id, song.upvoteCount)}
                       className="hover:text-green-500"
                     >
                       <ThumbsUp className="h-4 w-4" />

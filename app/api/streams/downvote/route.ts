@@ -29,10 +29,13 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-    return NextResponse.json({ message: "Upvote added" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Downvoted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
-      { message: "Error while upvoting" },
+      { message: "Error while downvoting" },
       { status: 411 }
     );
   }
