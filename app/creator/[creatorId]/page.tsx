@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +42,26 @@ type MyStream = {
 //   upvotes: number;
 // };
 
-const submitSong = async (url: string) => {
-  console.log("Submitting song:", url);
+const submitSong = async (url: string, creatorId: string) => {
+  try {
+    const res = await axios.post("/api/streams", {
+      creatorId,
+      url,
+    });
+    const data = res.data;
+    return { data };
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      return {
+        error: error.response?.data.message,
+        status: error.response?.status,
+      };
+    }
+    return {
+      error: "Error while uploading song, Please try again later!",
+      status: 500,
+    };
+  }
 };
 
 // const REFRESH_INTERVAL_MS = 10 * 1000;
@@ -57,15 +75,13 @@ export default function Dashboard({
 }: {
   params: { creatorId: string };
 }) {
-  const [videoUrl, setVideoUrl] = useState("");
-  const [videoDetails, setVideoDetails] = useState<{
-    title: string;
-    thumbnail: string;
-  } | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [upvoteCount, setUpvoteCount] = useState<Record<string, number>>({});
   const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
+  const [isSubmittingSong, setIsSubmittingSong] = useState(false);
+  const [songSubmitError, setSongSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -156,9 +172,19 @@ export default function Dashboard({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (videoUrl) {
-      await submitSong(videoUrl);
+      setIsSubmittingSong(true);
+      setSongSubmitError(null);
+      const data = await submitSong(videoUrl, creatorId);
+      setIsSubmittingSong(false);
+      console.log(data);
       setVideoUrl("");
-      setVideoDetails(null);
+      if (data.error) {
+        setSongSubmitError(data.error);
+        return;
+      }
+      setStreams((prev) => [...prev, data.data]);
+    } else {
+      setSongSubmitError("No url provided!");
     }
   };
 
@@ -208,28 +234,18 @@ export default function Dashboard({
                   id="video-url"
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={videoUrl}
-                  readOnly
+                  onChange={(e) => setVideoUrl(e.target.value)}
                   className="bg-gray-800 border-gray-700"
                 />
               </div>
-              {videoDetails && (
-                <div className="flex items-center space-x-4 bg-gray-800 p-2 rounded-lg">
-                  <Image
-                    src={videoDetails.thumbnail}
-                    alt="Video thumbnail"
-                    className="w-20 h-15 object-cover rounded"
-                    width={40}
-                    height={40}
-                  />
-                  <p className="flex-1 text-sm">{videoDetails.title}</p>
-                </div>
-              )}
               <Button
+                disabled={isSubmittingSong}
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700"
               >
-                Submit Song
+                {isSubmittingSong ? "Submitting..." : "Submit"}
               </Button>
+              {songSubmitError && <p>Error will occur here</p>}
             </form>
           </div>
         </section>
@@ -244,8 +260,8 @@ export default function Dashboard({
                 >
                   <div className="flex items-center space-x-4">
                     <Image
-                      src={song.smallImg}
-                      alt={`Song ${song.title}`}
+                      src={song.smallImg || song.bigImg}
+                      alt={song.title}
                       className="w-20 h-15 object-cover rounded"
                       width={40}
                       height={40}
@@ -270,14 +286,6 @@ export default function Dashboard({
                     <span className="text-sm font-medium">
                       {upvoteCount[song.id]}
                     </span>
-                    {/* <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => vote(song., "down")}
-                      className="hover:text-red-500"
-                    >
-                      <ThumbsDown className="h-4 w-4" />
-                    </Button> */}
                   </div>
                 </div>
               ))}
