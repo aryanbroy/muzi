@@ -12,7 +12,7 @@ import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 import { YT_REGEX } from "@/lib/utils";
 
-type Stream = {
+export type Stream = {
   id: string;
   type: ["Youtube", "Spotify"];
   url: string;
@@ -26,7 +26,7 @@ type Stream = {
   haveUpvoted: boolean;
 };
 
-type MyStream = {
+export type MyStream = {
   active: boolean;
   bigImg: string;
   extractedId: string;
