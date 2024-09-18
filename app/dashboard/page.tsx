@@ -173,7 +173,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Current Song Title</h3>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="icon"
                 onClick={() => setIsPlaying(!isPlaying)}
@@ -183,6 +183,19 @@ export default function Dashboard() {
                 ) : (
                   <Play className="h-4 w-4" />
                 )}
+              </Button> */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4 mr-2" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                Play Next
               </Button>
             </div>
           </div>
