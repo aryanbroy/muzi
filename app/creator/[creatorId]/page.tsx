@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator"
-import { ThumbsUp, ThumbsDown, Play, Pause, Share2 } from "lucide-react";
+import { Play, Pause, Share2, ArrowBigDown, ArrowBigUp } from "lucide-react";
 import Image from "next/image";
+import LiteYouTubeEmbed from "react-lite-youtube-embed";
+import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
+import { YT_REGEX } from "@/lib/utils";
 
 type Stream = {
   id: string;
@@ -237,6 +240,11 @@ export default function Dashboard({
                   onChange={(e) => setVideoUrl(e.target.value)}
                   className="bg-gray-800 border-gray-700"
                 />
+                {videoUrl && videoUrl.match(YT_REGEX) && (
+                  <div>
+                    <LiteYouTubeEmbed id={videoUrl.split("?v=")[1]} title="" />
+                  </div>
+                )}
               </div>
               <Button
                 disabled={isSubmittingSong}
@@ -278,13 +286,13 @@ export default function Dashboard({
                       className="hover:text-green-500"
                     >
                       {upvotedSongsId.includes(song.id) ? (
-                        <ThumbsDown className="h-4 w-4" />
+                        <ArrowBigDown className="h-4 w-4" />
                       ) : (
-                        <ThumbsUp className="h-4 w-4" />
+                        <ArrowBigUp className="h-4 w-4" />
                       )}
                     </Button>
                     <span className="text-sm font-medium">
-                      {upvoteCount[song.id]}
+                      {upvoteCount[song.id] ?? 0}
                     </span>
                   </div>
                 </div>

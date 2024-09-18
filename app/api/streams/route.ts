@@ -4,8 +4,8 @@ import { z } from "zod";
 
 //@ts-expect-error doesn't have types include
 import youtubesearchapi from 'youtube-search-api'
+import { YT_REGEX } from "@/lib/utils";
 
-const YT_REGEX = new RegExp("^(https?://)?(www.)?(youtube.com|youtu.be)/.+$");
 
 const CreateStreamSchema = z.object({
   creatorId: z.string(),
