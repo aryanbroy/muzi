@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator"
-import { Play, Pause, Share2, ArrowBigDown, ArrowBigUp } from "lucide-react";
+import { Share2, ArrowBigDown, ArrowBigUp } from "lucide-react";
 import Image from "next/image";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
@@ -68,10 +68,10 @@ const submitSong = async (url: string, creatorId: string) => {
 };
 
 // const REFRESH_INTERVAL_MS = 10 * 1000;
-const refreshStreams = async () => {
-  await axios.get("/api/streams/my");
-  // console.log(res);
-};
+// const refreshStreams = async () => {
+//   await axios.get("/api/streams/my");
+//   // console.log(res);
+// };
 
 export default function Dashboard({
   params: { creatorId },
@@ -79,12 +79,12 @@ export default function Dashboard({
   params: { creatorId: string };
 }) {
   const [videoUrl, setVideoUrl] = useState<string>("");
-  const [isPlaying, setIsPlaying] = useState(false);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [upvoteCount, setUpvoteCount] = useState<Record<string, number>>({});
   const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [songSubmitError, setSongSubmitError] = useState<string | null>(null);
+  console.log(upvotedSongsId);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -118,9 +118,9 @@ export default function Dashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creatorId]);
 
-  useEffect(() => {
-    refreshStreams();
-  }, []);
+  // useEffect(() => {
+  //   refreshStreams();
+  // }, []);
 
   const handleVote = async (streamId: string) => {
     if (!upvotedSongsId.includes(streamId)) {
@@ -213,17 +213,6 @@ export default function Dashboard({
             </div>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Current Song Title</h3>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-              </Button>
             </div>
           </div>
           <div className="space-y-4">

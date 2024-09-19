@@ -71,8 +71,15 @@ export async function GET(req: NextRequest) {
   try {
     const creatorId = req.nextUrl.searchParams.get("creatorId");
 
-    const [streams, activeStream] = await Promise.all([
-      prismaClient.stream.findMany({
+    if (!creatorId) {
+      return NextResponse.json(
+        { message: "Error, no creator id found" },
+        { status: 400 }
+      );
+    }
+
+    const getStreamsOfCreator = () => {
+      const streams = prismaClient.stream.findMany({
         where: {
           userId: creatorId ?? "",
         },
@@ -83,15 +90,22 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-      }),
-      prismaClient.currentStream.findFirst({
+      });
+      return streams;
+    };
+
+    const getCurrentStream = () => {
+      const activeStream = prismaClient.currentStream.findFirst({
         where: {
-          userId: creatorId ?? "",
+          userId: creatorId,
         },
-        include: {
-          stream: true,
-        },
-      }),
+      });
+      return activeStream;
+    };
+
+    const [streams, activeStream] = await Promise.all([
+      getStreamsOfCreator(),
+      getCurrentStream(),
     ]);
 
     return NextResponse.json(
@@ -105,6 +119,7 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { message: "Error while fetching streams" },
       { status: 411 }

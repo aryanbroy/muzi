@@ -3,7 +3,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Play, Pause, Share2, ArrowBigUp } from "lucide-react";
+import { Play, Share2, ArrowBigUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Copy } from "lucide-react";
 
@@ -44,9 +44,9 @@ const submitSong = async (url: string) => {
 
 export default function Dashboard() {
   const [videoUrl, setVideoUrl] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
   const [creatorUrl, setCreatorUrl] = useState("");
   const [streams, setStreams] = useState<MyStream[]>([]);
+  const [currentVideo, setCurrentVideo] = useState(null);
   const { toast } = useToast();
 
   const { data: session } = useSession();
@@ -115,6 +115,14 @@ export default function Dashboard() {
     });
   };
 
+  const playNext = async () => {
+    console.log("Play next song");
+    const res = await axios.get("/api/streams/next");
+    const data = res.data;
+    console.log(data);
+    // setCurrentVideo(data)
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100">
       <main className="flex-1 p-4 md:p-6 space-y-6">
@@ -173,29 +181,13 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Current Song Title</h3>
-              {/* <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsPlaying(!isPlaying)}
+                onClick={playNext}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4 mr-2" />
-                ) : (
-                  <Play className="h-4 w-4 mr-2" />
-                )}
-                Play Next
+                <Play className="h-4 w-4 mr-2" /> Play Next
               </Button>
             </div>
           </div>

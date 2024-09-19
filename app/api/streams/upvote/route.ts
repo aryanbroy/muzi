@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: "Upvote added" }, { status: 200 });
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { message: "Error while upvoting" },
       { status: 411 }
