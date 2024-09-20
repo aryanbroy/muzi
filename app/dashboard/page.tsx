@@ -24,6 +24,17 @@ import { useToast } from "@/hooks/use-toast";
 import { MyStream } from "../creator/[creatorId]/page";
 import Image from "next/image";
 
+type CurrentVideoType = {
+  id: string;
+  type: ["Youtube", "Spotify"];
+  url: string;
+  extractedId: string;
+  title: string;
+  smallImg: string;
+  bigImg: string;
+  active: boolean;
+  userId: string;
+};
 const fetchVideoDetails = async (url: string) => {
   console.log(url);
   return {
@@ -46,7 +57,9 @@ export default function Dashboard() {
   const [videoUrl, setVideoUrl] = useState("");
   const [creatorUrl, setCreatorUrl] = useState("");
   const [streams, setStreams] = useState<MyStream[]>([]);
-  const [currentVideo, setCurrentVideo] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState<CurrentVideoType | null>(
+    null
+  );
   const { toast } = useToast();
 
   const { data: session } = useSession();
@@ -116,11 +129,13 @@ export default function Dashboard() {
   };
 
   const playNext = async () => {
-    console.log("Play next song");
-    const res = await axios.get("/api/streams/next");
-    const data = res.data;
-    console.log(data);
-    // setCurrentVideo(data)
+    try {
+      const res = await axios.get("/api/streams/next");
+      const data = res.data;
+      setCurrentVideo(data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -176,8 +191,13 @@ export default function Dashboard() {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Now Playing</h2>
             <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-              {/* This would be replaced with an actual YouTube embed */}
-              <p className="text-gray-400">YouTube Player Placeholder</p>
+              <iframe
+                width="853"
+                height="480"
+                src={`https://www.youtube.com/embed/${currentVideo?.extractedId}?autoplay=1`}
+                allow="autoplay"
+                title="Embedded youtube"
+              />
             </div>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Current Song Title</h3>

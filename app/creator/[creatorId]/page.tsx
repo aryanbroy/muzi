@@ -84,7 +84,6 @@ export default function Dashboard({
   const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [songSubmitError, setSongSubmitError] = useState<string | null>(null);
-  console.log(upvotedSongsId);
 
   useEffect(() => {
     const fetchStreams = async () => {
