@@ -26,31 +26,31 @@ export async function GET() {
       },
     });
 
-    const updateCurrentStream = () => {
-      prismaClient.currentStream.upsert({
-        where: {
-          userId: user.id,
-        },
-        update: {
-          streamId: mostUpvotedStream?.id,
-        },
-        create: {
-          userId: user.id,
-          streamId: mostUpvotedStream?.id ?? "",
-        },
-      });
-    };
+    await prismaClient.currentStream.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        streamId: mostUpvotedStream?.id,
+      },
+      create: {
+        userId: user.id,
+        streamId: mostUpvotedStream?.id ?? "",
+      },
+    });
 
-    const deleteStreamAddedToCurrentStream = () => {
-      prismaClient.stream.delete({
-        where: {
-          id: mostUpvotedStream?.id,
-        },
-      });
-    };
-
-    await Promise.all([updateCurrentStream, deleteStreamAddedToCurrentStream]);
+    await prismaClient.stream.delete({
+      where: {
+        id: mostUpvotedStream?.id,
+      },
+    });
 
     return NextResponse.json(mostUpvotedStream, { status: 200 });
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json(
+      { message: "Error while getting next stream" },
+      { status: 411 }
+    );
+  }
 }

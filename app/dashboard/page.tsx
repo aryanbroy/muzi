@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [currentVideo, setCurrentVideo] = useState<CurrentVideoType | null>(
     null
   );
+  const [loadingCurrentVideo, setLoadingCurrentVideo] = useState(false);
   const { toast } = useToast();
 
   const { data: session } = useSession();
@@ -129,12 +130,15 @@ export default function Dashboard() {
   };
 
   const playNext = async () => {
+    setLoadingCurrentVideo(true);
     try {
       const res = await axios.get("/api/streams/next");
       const data = res.data;
       setCurrentVideo(data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoadingCurrentVideo(false)
     }
   };
 
@@ -207,7 +211,13 @@ export default function Dashboard() {
                 onClick={playNext}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Play className="h-4 w-4 mr-2" /> Play Next
+                {!loadingCurrentVideo ? (
+                  <>
+                    <Play className="h-4 w-4 mr-2" /> Play Next
+                  </>
+                ) : (
+                  "Loading..."
+                )}
               </Button>
             </div>
           </div>
