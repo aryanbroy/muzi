@@ -64,21 +64,12 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const { data: session } = useSession();
-  // console.log(session);
 
   useEffect(() => {
     if (!session || !session.user) return;
     const url = `${window.location.origin}/creator/${session?.user.id}`;
     setCreatorUrl(url);
   }, [session, session?.user]);
-
-  // const fetchStreams = async () => {
-  //   const res = await axios.get(
-  //     `/api/streams?creatorId=1f37f888-757a-4469-ada5-8086b37dff26`
-  //   );
-  //   const data = res.data;
-  //   console.log(data);
-  // };
 
   // useEffect(() => {
   //   refreshStreams();

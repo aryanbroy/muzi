@@ -19,6 +19,7 @@ export async function GET() {
     const streams = await prismaClient.stream.findMany({
       where: {
         userId: user.id ?? "",
+        played: false,
       },
       include: {
         _count: {
