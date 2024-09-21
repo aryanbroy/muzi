@@ -11,6 +11,7 @@ import Image from "next/image";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 import { YT_REGEX } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 export type Stream = {
   id: string;
@@ -24,6 +25,7 @@ export type Stream = {
   userId: string;
   upvoteCount: number;
   haveUpvoted: boolean;
+  upvotes: string[];
 };
 
 export type MyStream = {
@@ -78,12 +80,15 @@ export default function Dashboard({
 }: {
   params: { creatorId: string };
 }) {
+  const { data: session } = useSession();
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [streams, setStreams] = useState<Stream[]>([]);
   const [upvoteCount, setUpvoteCount] = useState<Record<string, number>>({});
   const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [songSubmitError, setSongSubmitError] = useState<string | null>(null);
+  // console.log(upvotedSongsId);
+  console.log(streams);
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -92,15 +97,16 @@ export default function Dashboard({
           `/api/streams?creatorId=${creatorId ?? ""}`
         );
         const upcomingSongs: Stream[] = res.data.streams;
-        const myStreamRes = await axios.get("/api/streams/my");
-        const myStreamData: MyStream[] = myStreamRes.data.streams;
+        // const myStreamRes = await axios.get("/api/streams/my");
+        // const myStreamData: MyStream[] = myStreamRes.data.streams;
         upcomingSongs.map((song) => {
-          song.haveUpvoted = myStreamData.some((stream) => {
-            if (stream.id === song.id && stream.haveUpvoted === true) {
-              setUpvotedSongsId([...upvotedSongsId, stream.id]);
-              return true;
-            }
-          });
+          if (song.upvotes.includes(session?.user?.id ?? "")) {
+            song.haveUpvoted = true;
+            setUpvotedSongsId([...upvotedSongsId, song.id]);
+          } else {
+            song.haveUpvoted = false;
+          }
+          // song.haveUpvoted = song.upvotes.includes(session?.user?.id ?? "");
         });
         const upvoteCounts = upcomingSongs.reduce((acc, song) => {
           acc[song.id] = song.upvoteCount;
@@ -115,7 +121,7 @@ export default function Dashboard({
     fetchStreams();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [creatorId]);
+  }, [creatorId, session?.user.id]);
 
   // useEffect(() => {
   //   refreshStreams();

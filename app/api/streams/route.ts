@@ -90,6 +90,11 @@ export async function GET(req: NextRequest) {
               upvotes: true,
             },
           },
+          upvotes: {
+            select: {
+              userId: true,
+            },
+          },
         },
       });
       return streams;
@@ -111,9 +116,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        streams: streams.map(({ _count, ...rest }) => ({
+        streams: streams.map(({ _count, upvotes, ...rest }) => ({
           ...rest,
           upvoteCount: _count.upvotes,
+          upvotes: upvotes.map((upvote) => upvote.userId),
         })),
         activeStream,
       },
