@@ -90,8 +90,23 @@ export default function Dashboard() {
       console.log(error);
     }
   };
+
+  const fetchCurrentStream = async () => {
+    try {
+      const res = await axios.get("/api/streams/currentStream");
+      const data = res.data;
+      setCurrentVideo(data.stream);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    fetchMyStreams();
+    const fetchAll = async () => {
+      await Promise.all([fetchMyStreams(), fetchCurrentStream()]);
+    };
+    // fetchMyStreams();
+    fetchAll();
   }, []);
 
   const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,11 +140,13 @@ export default function Dashboard() {
     try {
       const res = await axios.get("/api/streams/next");
       const data = res.data;
+      const filteredStreams = streams.filter((stream) => stream.id !== data.id);
+      setStreams(filteredStreams);
       setCurrentVideo(data);
     } catch (error) {
       console.log(error);
     } finally {
-      setLoadingCurrentVideo(false)
+      setLoadingCurrentVideo(false);
     }
   };
 
