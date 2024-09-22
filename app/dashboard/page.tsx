@@ -131,7 +131,7 @@ export default function Dashboard() {
   const copyLink = () => {
     navigator.clipboard.writeText(creatorUrl);
     toast({
-      title: "Text copied to clipboard!",
+      title: "Link copied to clipboard!",
     });
   };
 

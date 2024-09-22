@@ -6,12 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator"
-import { Share2, ArrowBigDown, ArrowBigUp } from "lucide-react";
+import { Share2, ArrowBigDown, ArrowBigUp, Copy } from "lucide-react";
 import Image from "next/image";
 import LiteYouTubeEmbed from "react-lite-youtube-embed";
 import "react-lite-youtube-embed/dist/LiteYouTubeEmbed.css";
 import { YT_REGEX } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 export type Stream = {
   id: string;
@@ -87,6 +99,8 @@ export default function Dashboard({
   const [upvotedSongsId, setUpvotedSongsId] = useState<string[]>([]);
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [songSubmitError, setSongSubmitError] = useState<string | null>(null);
+  const [creatorUrl, setCreatorUrl] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchStreams = async () => {
@@ -123,9 +137,18 @@ export default function Dashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creatorId, session?.user.id]);
 
-  // useEffect(() => {
-  //   refreshStreams();
-  // }, []);
+  const copyLink = () => {
+    navigator.clipboard.writeText(creatorUrl);
+    toast({
+      title: "Link copied to clipboard!",
+    });
+  };
+
+  useEffect(() => {
+    // refreshStreams();
+    const url = window.location.href;
+    setCreatorUrl(url);
+  }, []);
 
   const handleVote = async (streamId: string) => {
     if (!upvotedSongsId.includes(streamId)) {
@@ -201,56 +224,80 @@ export default function Dashboard({
       <main className="flex-1 p-4 md:p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Song Voting</h1>
-          <Button
-            variant="outline"
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-        </div>
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Now Playing</h2>
-            <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-              {/* This would be replaced with an actual YouTube embed */}
-              <p className="text-gray-400">YouTube Player Placeholder</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Current Song Title</h3>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Submit a Song</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="video-url" className="text-sm font-medium">
-                  YouTube Video URL
-                </label>
-                <Input
-                  id="video-url"
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="bg-gray-800 border-gray-700"
-                />
-                {videoUrl && videoUrl.match(YT_REGEX) && (
-                  <div>
-                    <LiteYouTubeEmbed id={videoUrl.split("?v=")[1]} title="" />
-                  </div>
-                )}
-              </div>
+          <Dialog>
+            <DialogTrigger asChild>
               <Button
-                disabled={isSubmittingSong}
-                type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700"
+                // onClick={onShare}
               >
-                {isSubmittingSong ? "Submitting..." : "Submit"}
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
               </Button>
-              {songSubmitError && <p>Error will occur here</p>}
-            </form>
-          </div>
-        </section>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Share link</DialogTitle>
+                <DialogDescription>
+                  Share the voting link with your friends and fans
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center space-x-2">
+                <div className="grid flex-1 gap-2">
+                  <Label htmlFor="link" className="sr-only">
+                    Link
+                  </Label>
+                  <Input id="link" defaultValue={creatorUrl ?? ""} readOnly />
+                </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="px-3"
+                  onClick={copyLink}
+                >
+                  <span className="sr-only">Copy</span>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <DialogFooter className="sm:justify-start">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Close
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Submit a Song</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="video-url" className="text-md font-medium">
+                YouTube Video URL
+              </label>
+              <Input
+                id="video-url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="bg-gray-800 border-gray-700"
+              />
+              {videoUrl && videoUrl.match(YT_REGEX) && (
+                <div>
+                  <LiteYouTubeEmbed id={videoUrl.split("?v=")[1]} title="" />
+                </div>
+              )}
+            </div>
+            <Button
+              disabled={isSubmittingSong}
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {isSubmittingSong ? "Submitting..." : "Submit"}
+            </Button>
+            {songSubmitError && <p>Error will occur here</p>}
+          </form>
+        </div>
         <section className="space-y-4">
           <h2 className="text-2xl font-bold">Upcoming Songs</h2>
           <ScrollArea className="h-[400px] rounded-md border border-gray-700">
