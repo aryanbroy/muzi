@@ -154,7 +154,7 @@ export default function Dashboard({
     if (!upvotedSongsId.includes(streamId)) {
       setUpvoteCount((prev) => ({
         ...prev,
-        [streamId]: prev[streamId] + 1,
+        [streamId]: (prev[streamId] || 0) + 1,
       }));
       setUpvotedSongsId([...upvotedSongsId, streamId]);
       try {
