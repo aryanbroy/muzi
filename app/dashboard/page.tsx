@@ -1,12 +1,11 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, Share2, ArrowBigUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Copy } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +22,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { MyStream } from "../creator/[creatorId]/page";
 import Image from "next/image";
+// import YoutubePlayerWithVideoEnd from "@/components/YoutubePlayer";
+// @ts-expect-error doesn't have types
+import YouTubePlayer from "youtube-player";
 
 type CurrentVideoType = {
   id: string;
@@ -62,6 +64,7 @@ export default function Dashboard() {
   );
   const [loadingCurrentVideo, setLoadingCurrentVideo] = useState(false);
   const { toast } = useToast();
+  const videoPlayerRef = useRef<HTMLDivElement | null>(null);
 
   const { data: session } = useSession();
 
@@ -70,6 +73,35 @@ export default function Dashboard() {
     const url = `${window.location.origin}/creator/${session?.user.id}`;
     setCreatorUrl(url);
   }, [session, session?.user]);
+
+  useEffect(() => {
+    if (!videoPlayerRef || !currentVideo) {
+      console.log("no video found");
+      return;
+    }
+    const player = YouTubePlayer(videoPlayerRef.current);
+    // const player = YouTubePlayer("youtube-player");
+
+    player.loadVideoById(currentVideo?.extractedId);
+
+    player.playVideo();
+
+    const eventHandler = (event: any) => {
+      console.log(event);
+      if (event.data === 0) {
+        playNext();
+      }
+    };
+
+    player.on("stateChange", eventHandler);
+
+    return () => {
+      // player.off('stateChange', eventHandler);
+      player.destroy();
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo]);
 
   // useEffect(() => {
   //   refreshStreams();
@@ -150,6 +182,10 @@ export default function Dashboard() {
     }
   };
 
+  // const handleVideoEnd = () => {
+  //   console.log("Video ended");
+  // };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-950 text-gray-100">
       <main className="flex-1 p-4 md:p-6 space-y-6">
@@ -200,16 +236,24 @@ export default function Dashboard() {
           </Dialog>
         </div>
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
+          <div className="w-full space-y-4">
             <h2 className="text-2xl font-bold">Now Playing</h2>
-            <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-              <iframe
+            <div
+              ref={videoPlayerRef}
+              id={"youtube-player"}
+              className="w-full aspect-video bg-gray-800 rounded-lg flex items-center justify-center"
+            >
+              {/* <YoutubePlayerWithVideoEnd
+                videoId={currentVideo?.extractedId || ""}
+                onVideoEnd={handleVideoEnd}
+              /> */}
+              {/* <iframe
                 width="853"
                 height="480"
                 src={`https://www.youtube.com/embed/${currentVideo?.extractedId}?autoplay=1`}
                 allow="autoplay"
                 title="Embedded youtube"
-              />
+              /> */}
             </div>
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Current Song Title</h3>
